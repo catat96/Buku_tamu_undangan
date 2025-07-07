@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Catatan Data Orang</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      text-align: center;
+    }
+    input, textarea, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .form-container, .search-container {
+      background: white;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+      text-align: left;
+    }
+    .actions button {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Catatan Data Orang</h1>
+
+<div class="form-container">
+  <h3>Tambah Data</h3>
+  <input type="text" id="nama" placeholder="Nama" />
+  <input type="text" id="alamat" placeholder="Alamat" />
+  <textarea id="catatan" placeholder="Catatan..."></textarea>
+  <button onclick="tambahData()">Simpan</button>
+</div>
+
+<div class="search-container">
+  <h3>Cari Nama</h3>
+  <input type="text" id="search" placeholder="Cari nama..." oninput="tampilkanData()" />
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Nama</th>
+      <th>Alamat</th>
+      <th>Catatan</th>
+      <th>Aksi</th>
+    </tr>
+  </thead>
+  <tbody id="data-body">
+    <!-- Data ditampilkan di sini -->
+  </tbody>
+</table>
+
+<br/>
+<button onclick="resetData()" style="background-color: red; color: white;">Hapus Semua Data</button>
+
+<script>
+  let data = JSON.parse(localStorage.getItem("dataOrang")) || [];
+
+  function simpanData() {
+    localStorage.setItem("dataOrang", JSON.stringify(data));
+  }
+
+  function tambahData() {
+    const nama = document.getElementById("nama").value.trim();
+    const alamat = document.getElementById("alamat").value.trim();
+    const catatan = document.getElementById("catatan").value.trim();
+
+    if (!nama || !alamat) {
+      alert("Nama dan Alamat wajib diisi.");
+      return;
+    }
+
+    data.push({ nama, alamat, catatan });
+    simpanData();
+    tampilkanData();
+
+    document.getElementById("nama").value = "";
+    document.getElementById("alamat").value = "";
+    document.getElementById("catatan").value = "";
+  }
+
+  function tampilkanData() {
+    const tbody = document.getElementById("data-body");
+    tbody.innerHTML = "";
+    const keyword = document.getElementById("search").value.toLowerCase();
+
+    data.forEach((item, index) => {
+      if (item.nama.toLowerCase().includes(keyword)) {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${item.nama}</td>
+          <td>${item.alamat}</td>
+          <td>${item.catatan}</td>
+          <td class="actions">
+            <button onclick="editData(${index})">Edit</button>
+            <button onclick="hapusData(${index})">Hapus</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      }
+    });
+  }
+
+  function hapusData(index) {
+    if (confirm("Yakin ingin menghapus data ini?")) {
+      data.splice(index, 1);
+      simpanData();
+      tampilkanData();
+    }
+  }
+
+  function editData(index) {
+    const item = data[index];
+    const namaBaru = prompt("Edit Nama:", item.nama);
+    const alamatBaru = prompt("Edit Alamat:", item.alamat);
+    const catatanBaru = prompt("Edit Catatan:", item.catatan);
+
+    if (namaBaru && alamatBaru) {
+      data[index] = {
+        nama: namaBaru,
+        alamat: alamatBaru,
+        catatan: catatanBaru || "",
+      };
+      simpanData();
+      tampilkanData();
+    }
+  }
+
+  function resetData() {
+    if (confirm("Yakin ingin menghapus semua data?")) {
+      data = [];
+      simpanData();
+      tampilkanData();
+    }
+  }
+
+  // Tampilkan saat pertama kali
+  tampilkanData();
+</script>
+
+</body>
+</html>
