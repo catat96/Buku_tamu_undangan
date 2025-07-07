@@ -1,132 +1,127 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Buku Tamu Online</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Buku Tamu Pro</title>
   <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-      background-color: #f5f5f5;
-    }
-    h1 {
-      text-align: center;
-    }
-    input, textarea, button {
-      padding: 10px;
-      margin: 5px 0;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    .form-container, .search-container {
-      background: white;
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #ccc;
-      text-align: left;
-    }
-    th {
-      background-color: #eaeaea;
-    }
+    body { font-family: sans-serif; padding: 2rem; background: #f4f4f4; transition: 0.3s; }
+    h1 { text-align: center; }
+    form, table, .export-container { max-width: 800px; margin: auto; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 0 10px #ccc; }
+    input, textarea { width: 100%; padding: .5rem; margin-bottom: .5rem; border: 1px solid #ccc; border-radius: 4px; }
+    button, .toggle { padding: .6rem 1rem; background: green; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: .5rem; }
+    table { border-collapse: collapse; margin-top: 2rem; width: 100%; }
+    th, td { padding: .6rem; border: 1px solid #ccc; text-align: left; }
+    #search { margin-bottom: 1rem; padding: .5rem; width: 100%; }
+    .dark { background: #222; color: white; }
+    .dark form, .dark table, .dark .export-container { background: #333; color: white; box-shadow: 0 0 10px #111; }
+    .dark input, .dark textarea { background: #444; color: white; border-color: #666; }
+    .dark th, .dark td { border-color: #555; }
   </style>
 </head>
 <body>
+  <h1>Buku Tamu</h1>
 
-<h1>Buku Tamu</h1>
+  <form id="form-bukutamu">
+    <h3>Tambah Data</h3>
+    <input type="text" name="nama" placeholder="Nama" required />
+    <input type="text" name="alamat" placeholder="Alamat" required />
+    <textarea name="catatan" placeholder="Catatan"></textarea>
+    <button type="submit">Kirim</button>
+    <button type="button" onclick="toggleTheme()" class="toggle">🌙/☀️</button>
+  </form>
 
-<div class="form-container">
-  <h3>Tambah Data</h3>
-  <input type="text" id="nama" placeholder="Nama" required />
-  <input type="text" id="alamat" placeholder="Alamat" required />
-  <textarea id="catatan" placeholder="Catatan..."></textarea>
-  <button onclick="kirimData()">Kirim</button>
-</div>
+  <div class="export-container">
+    <input type="text" id="search" placeholder="Cari nama...">
+    <button onclick="exportCSV()">Export CSV</button>
+    <table id="data-table">
+      <thead>
+        <tr><th>No</th><th>Nama</th><th>Alamat</th><th>Catatan</th><th>Tanggal</th><th>Aksi</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-<div class="search-container">
-  <input type="text" id="search" placeholder="Cari nama..." oninput="tampilkanData()" />
-</div>
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbxMvsO0eXxaOvAxDTiboNUZKeeh5QG0qDu9ofMSj-XYdT6eByykfI072Hlh9xJfQFdx/exec";
+    const form = document.forms['form-bukutamu'];
+    let globalData = [];
 
-<table>
-  <thead>
-    <tr>
-      <th>No</th>
-      <th>Nama</th>
-      <th>Alamat</th>
-      <th>Catatan</th>
-      <th>Tanggal</th>
-    </tr>
-  </thead>
-  <tbody id="data-body"></tbody>
-</table>
-
-<script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbxMvsO0eXxaOvAxDTiboNUZKeeh5QG0qDu9ofMSj-XYdT6eByykfI072Hlh9xJfQFdx/exec";
-
-function kirimData() {
-  const nama = document.getElementById("nama").value.trim();
-  const alamat = document.getElementById("alamat").value.trim();
-  const catatan = document.getElementById("catatan").value.trim();
-
-  if (!nama || !alamat) {
-    alert("Nama dan Alamat wajib diisi.");
-    return;
-  }
-
-  const data = { nama, alamat, catatan };
-
-  fetch(scriptURL, {
-    method: 'POST',
-    body: JSON.stringify(data),
-    headers: { 'Content-Type': 'application/json' }
-  })
-  .then(() => {
-    alert("Data berhasil dikirim!");
-    document.getElementById("nama").value = "";
-    document.getElementById("alamat").value = "";
-    document.getElementById("catatan").value = "";
-    tampilkanData();
-  })
-  .catch(err => alert("Gagal mengirim data."));
-}
-
-function tampilkanData() {
-  fetch(scriptURL + '?read=true')
-    .then(res => res.json())
-    .then(data => {
-      const keyword = document.getElementById("search").value.toLowerCase();
-      const tbody = document.getElementById("data-body");
-      tbody.innerHTML = "";
-
-      data.filter(item => item.nama.toLowerCase().includes(keyword))
-          .forEach((item, index) => {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-              <td>${index + 1}</td>
-              <td>${item.nama}</td>
-              <td>${item.alamat}</td>
-              <td>${item.catatan}</td>
-              <td>${item.tanggal}</td>
-            `;
-            tbody.appendChild(row);
-          });
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const namaBaru = form.nama.value.trim().toLowerCase();
+      if (globalData.some(d => d.nama.toLowerCase() === namaBaru)) {
+        alert("Nama sudah pernah diinput!");
+        return;
+      }
+      const data = {
+        nama: form.nama.value,
+        alamat: form.alamat.value,
+        catatan: form.catatan.value
+      };
+      fetch(scriptURL, {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(res => {
+        alert("Data berhasil dikirim!");
+        form.reset();
+        loadData();
+      })
+      .catch(err => alert("Gagal mengirim data."));
     });
-}
 
-tampilkanData();
-</script>
+    function loadData() {
+      fetch(scriptURL + "?read=true")
+        .then(res => res.json())
+        .then(data => {
+          globalData = data;
+          const tbody = document.querySelector('#data-table tbody');
+          const search = document.getElementById('search').value.toLowerCase();
+          tbody.innerHTML = "";
+          data
+            .filter(d => d.nama.toLowerCase().includes(search))
+            .forEach((d, i) => {
+              const row = `<tr>
+                <td>${i+1}</td>
+                <td>${d.nama}</td>
+                <td>${d.alamat}</td>
+                <td>${d.catatan}</td>
+                <td>${d.tanggal}</td>
+                <td><button onclick="hapusData(${i+1})">Hapus</button></td>
+              </tr>`;
+              tbody.innerHTML += row;
+            });
+        });
+    }
 
+    function hapusData(row) {
+      alert("Untuk fitur hapus, edit spreadsheet langsung. (Fitur ini demo visual saja)");
+    }
+
+    function exportCSV() {
+      const rows = [["No", "Nama", "Alamat", "Catatan", "Tanggal"]];
+      globalData.forEach((d, i) => {
+        rows.push([i+1, d.nama, d.alamat, d.catatan, d.tanggal]);
+      });
+      let csv = rows.map(r => r.join(",")).join("\n");
+      let blob = new Blob([csv], { type: 'text/csv' });
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement("a");
+      a.href = url;
+      a.download = "buku_tamu.csv";
+      a.click();
+    }
+
+    document.getElementById('search').addEventListener('input', loadData);
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+    }
+
+    window.onload = loadData;
+  </script>
 </body>
 </html>
