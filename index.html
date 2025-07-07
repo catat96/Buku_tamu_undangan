@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Catatan Data Orang</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Buku Tamu Online</title>
   <style>
     body {
       font-family: sans-serif;
@@ -38,128 +38,94 @@
       border-bottom: 1px solid #ccc;
       text-align: left;
     }
-    .actions button {
-      margin-right: 5px;
+    th {
+      background-color: #eaeaea;
     }
   </style>
 </head>
 <body>
 
-<h1>Catatan Data Orang</h1>
+<h1>Buku Tamu</h1>
 
 <div class="form-container">
   <h3>Tambah Data</h3>
-  <input type="text" id="nama" placeholder="Nama" />
-  <input type="text" id="alamat" placeholder="Alamat" />
+  <input type="text" id="nama" placeholder="Nama" required />
+  <input type="text" id="alamat" placeholder="Alamat" required />
   <textarea id="catatan" placeholder="Catatan..."></textarea>
-  <button onclick="tambahData()">Simpan</button>
+  <button onclick="kirimData()">Kirim</button>
 </div>
 
 <div class="search-container">
-  <h3>Cari Nama</h3>
   <input type="text" id="search" placeholder="Cari nama..." oninput="tampilkanData()" />
 </div>
 
 <table>
   <thead>
     <tr>
+      <th>No</th>
       <th>Nama</th>
       <th>Alamat</th>
       <th>Catatan</th>
-      <th>Aksi</th>
+      <th>Tanggal</th>
     </tr>
   </thead>
-  <tbody id="data-body">
-    <!-- Data ditampilkan di sini -->
-  </tbody>
+  <tbody id="data-body"></tbody>
 </table>
 
-<br/>
-<button onclick="resetData()" style="background-color: red; color: white;">Hapus Semua Data</button>
-
 <script>
-  let data = JSON.parse(localStorage.getItem("dataOrang")) || [];
+const scriptURL = "https://script.google.com/macros/s/AKfycbwO691FBjwle4EZLqQyBZx9CJbY-tI-1qbshZRXaT4uRuiv4THVnJq51ytERTF_RggC/exec";
 
-  function simpanData() {
-    localStorage.setItem("dataOrang", JSON.stringify(data));
+function kirimData() {
+  const nama = document.getElementById("nama").value.trim();
+  const alamat = document.getElementById("alamat").value.trim();
+  const catatan = document.getElementById("catatan").value.trim();
+
+  if (!nama || !alamat) {
+    alert("Nama dan Alamat wajib diisi.");
+    return;
   }
 
-  function tambahData() {
-    const nama = document.getElementById("nama").value.trim();
-    const alamat = document.getElementById("alamat").value.trim();
-    const catatan = document.getElementById("catatan").value.trim();
+  const data = { nama, alamat, catatan };
 
-    if (!nama || !alamat) {
-      alert("Nama dan Alamat wajib diisi.");
-      return;
-    }
-
-    data.push({ nama, alamat, catatan });
-    simpanData();
-    tampilkanData();
-
+  fetch(scriptURL, {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: { 'Content-Type': 'application/json' }
+  })
+  .then(() => {
+    alert("Data berhasil dikirim!");
     document.getElementById("nama").value = "";
     document.getElementById("alamat").value = "";
     document.getElementById("catatan").value = "";
-  }
+    tampilkanData();
+  })
+  .catch(err => alert("Gagal mengirim data."));
+}
 
-  function tampilkanData() {
-    const tbody = document.getElementById("data-body");
-    tbody.innerHTML = "";
-    const keyword = document.getElementById("search").value.toLowerCase();
+function tampilkanData() {
+  fetch(scriptURL + '?read=true')
+    .then(res => res.json())
+    .then(data => {
+      const keyword = document.getElementById("search").value.toLowerCase();
+      const tbody = document.getElementById("data-body");
+      tbody.innerHTML = "";
 
-    data.forEach((item, index) => {
-      if (item.nama.toLowerCase().includes(keyword)) {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${item.nama}</td>
-          <td>${item.alamat}</td>
-          <td>${item.catatan}</td>
-          <td class="actions">
-            <button onclick="editData(${index})">Edit</button>
-            <button onclick="hapusData(${index})">Hapus</button>
-          </td>
-        `;
-        tbody.appendChild(row);
-      }
+      data.filter(item => item.nama.toLowerCase().includes(keyword))
+          .forEach((item, index) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${index + 1}</td>
+              <td>${item.nama}</td>
+              <td>${item.alamat}</td>
+              <td>${item.catatan}</td>
+              <td>${item.tanggal}</td>
+            `;
+            tbody.appendChild(row);
+          });
     });
-  }
+}
 
-  function hapusData(index) {
-    if (confirm("Yakin ingin menghapus data ini?")) {
-      data.splice(index, 1);
-      simpanData();
-      tampilkanData();
-    }
-  }
-
-  function editData(index) {
-    const item = data[index];
-    const namaBaru = prompt("Edit Nama:", item.nama);
-    const alamatBaru = prompt("Edit Alamat:", item.alamat);
-    const catatanBaru = prompt("Edit Catatan:", item.catatan);
-
-    if (namaBaru && alamatBaru) {
-      data[index] = {
-        nama: namaBaru,
-        alamat: alamatBaru,
-        catatan: catatanBaru || "",
-      };
-      simpanData();
-      tampilkanData();
-    }
-  }
-
-  function resetData() {
-    if (confirm("Yakin ingin menghapus semua data?")) {
-      data = [];
-      simpanData();
-      tampilkanData();
-    }
-  }
-
-  // Tampilkan saat pertama kali
-  tampilkanData();
+tampilkanData();
 </script>
 
 </body>
